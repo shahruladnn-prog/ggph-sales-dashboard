@@ -21,7 +21,15 @@ export default function MissionControl() {
   }, []);
 
   const { startDate, endDate } = useMemo(() => {
-    return { startDate: new Date(startDateStr), endDate: new Date(endDateStr) };
+    // Construct local midnight from string to avoid TZ shifts
+    const startParts = startDateStr.split('-').map(Number);
+    const endParts = endDateStr.split('-').map(Number);
+    
+    // JS Months are 0-indexed (Jan is 0)
+    const startDate = new Date(startParts[0], startParts[1] - 1, startParts[2], 0, 0, 0);
+    const endDate = new Date(endParts[0], endParts[1] - 1, endParts[2], 23, 59, 59, 999);
+    
+    return { startDate, endDate };
   }, [startDateStr, endDateStr]);
 
   const stats = useDashboardStats({ startDate, endDate, selectedBranchIds, allBranches: branches });
