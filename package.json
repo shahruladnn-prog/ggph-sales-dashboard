@@ -1,6 +1,14 @@
 {
   "name": "ggph-dashboard-monorepo",
   "private": true,
+  "dependencies": {
+    "@supabase/supabase-js": "^2.100.1",
+    "axios": "^1.14.0"
+  },
+  "devDependencies": {
+    "@vercel/node": "^5.6.22",
+    "@types/node": "^22.0.0"
+  },
   "scripts": {
     "build": "cd client && npm install && npm run build"
   }

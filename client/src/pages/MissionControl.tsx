@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Activity, CircleDollarSign, AlertTriangle, RefreshCw, BarChart2 } from 'lucide-react';
 import { RevenueChart } from '../components/RevenueChart';
 import { CategoryChart } from '../components/CategoryChart';
@@ -9,15 +9,40 @@ import { subDays, format } from 'date-fns';
 
 export default function MissionControl() {
   const [showManualForm, setShowManualForm] = useState(false);
-  const [startDateStr, setStartDateStr] = useState(format(subDays(new Date(), 7), 'yyyy-MM-dd'));
+  const [startDateStr, setStartDateStr] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
   const [endDateStr, setEndDateStr] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedBranchIds, setSelectedBranchIds] = useState<string[]>([]);
   const [branches, setBranches] = useState<{id: string, name: string}[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState('');
 
   useEffect(() => {
     supabase.from('secure_branch_list').select('id, name').then(({data}) => {
        if (data) setBranches(data);
     });
+  }, []);
+
+  const handleForceSync = useCallback(async () => {
+    setIsSyncing(true);
+    setSyncMsg('Syncing...');
+    try {
+      const res = await fetch('/api/sync', {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${import.meta.env.VITE_SYNC_SECRET || ''}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSyncMsg(`✅ Synced! Refreshing...`);
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        setSyncMsg(`❌ ${data.error || 'Sync failed'}`);
+      }
+    } catch {
+      setSyncMsg('❌ Network error');
+    } finally {
+      setIsSyncing(false);
+      setTimeout(() => setSyncMsg(''), 4000);
+    }
   }, []);
 
   const { startDate, endDate } = useMemo(() => {
@@ -60,9 +85,17 @@ export default function MissionControl() {
           >
             Manual Entry
           </button>
-          <button className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-cyan-900 border border-cyan-500/50 hover:bg-cyan-800 neon-glow-cyan active:scale-95 transition-all text-cyan-100">
-            <RefreshCw className="w-4 h-4" /> Force Sync
-          </button>
+          <div className="flex flex-col items-end gap-1">
+            <button 
+              onClick={handleForceSync}
+              disabled={isSyncing}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-cyan-900 border border-cyan-500/50 hover:bg-cyan-800 neon-glow-cyan active:scale-95 transition-all text-cyan-100 disabled:opacity-50 disabled:cursor-wait"
+            >
+              <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+              {isSyncing ? 'Syncing...' : 'Force Sync'}
+            </button>
+            {syncMsg && <span className="text-xs text-cyan-300 font-mono">{syncMsg}</span>}
+          </div>
         </div>
       </header>
 
