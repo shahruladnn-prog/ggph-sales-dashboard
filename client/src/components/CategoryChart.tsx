@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const COLORS = ['#06b6d4', '#a855f7', '#fbbf24', '#f87171', '#34d399', '#f472b6', '#cbd5e1'];
@@ -28,12 +28,12 @@ export function CategoryChart({ data }: { data: { name: string, value: number }[
           dataKey="value"
           stroke="none"
         >
-          {data.map((entry, index) => (
+          {data.map((_, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>
         <Tooltip
-          formatter={(value: number) => formatCurrency(value)}
+          formatter={(value: any) => formatCurrency(Number(value))}
           contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', color: '#fff', borderRadius: '8px' }}
           itemStyle={{ color: '#fff' }}
         />
