@@ -1,10 +1,6 @@
 {
   "name": "ggph-dashboard-monorepo",
   "private": true,
-  "workspaces": [
-    "client",
-    "server"
-  ],
   "scripts": {
     "build": "cd client && npm install && npm run build"
   }
