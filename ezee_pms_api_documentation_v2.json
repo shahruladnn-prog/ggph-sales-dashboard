@@ -1,0 +1,1184 @@
+{
+  "api_documentation": {
+    "title": "eZee Connectivity Portal – YCS Connectivity API",
+    "version": "1.0",
+    "description": "The YCS Connectivity API enables Connectivity Partners to send and retrieve data for hotel properties. Built on REST principles with predictable, resource-oriented URLs. Supports XML, JSON, and CSV response formats. Connectivity Partners can manage rates, availability, bookings, housekeeping, and more from their own systems.",
+    "base_url": "https://live.ipms247.com",
+    "postman_collection": "https://ezeenextgen.s3-us-west-2.amazonaws.com/download/eZeeLibrary/eZee%20Connectivity%20API.postman_collection.json",
+    "contact": {
+      "email": "integration@ezeetechnosys.com",
+      "sandbox_registration": "https://api.ezeetechnosys.com/registration/",
+      "documentation_url": "https://api.ezeetechnosys.com"
+    },
+    "environments": {
+      "sandbox": {
+        "description": "Sandbox environment for testing. Register at https://api.ezeetechnosys.com/registration/ to get credentials.",
+        "differentiated_by": "Hotel codes and API keys"
+      },
+      "production": {
+        "description": "Live production environment. Contact integration@ezeetechnosys.com to obtain credentials.",
+        "differentiated_by": "Hotel codes and API keys"
+      }
+    },
+    "authentication": {
+      "scheme": "Basic HTTP Authentication",
+      "description": "YCS Connectivity APIs use the basic HTTP authentication scheme. Every request must include a valid hotel code and authentication token.",
+      "prerequisites": [
+        "A valid hotel code",
+        "An Authentication Token (AuthCode or APIKey)"
+      ],
+      "headers": {
+        "User-Agent": {
+          "required": true,
+          "format": "openAPI-{vendorname/propertyname}",
+          "example": "openAPI-SampleHotel",
+          "description": "Every API request must include this User-Agent header."
+        }
+      },
+      "auth_fields": {
+        "HotelCode": {
+          "type": "INT(11)",
+          "description": "Unique hotel identifier assigned to the property",
+          "example": "XXXX"
+        },
+        "AuthCode": {
+          "type": "VARCHAR(300)",
+          "description": "Unique authentication token for the property",
+          "example": "XXXXXXXXXXXXXXXXX"
+        },
+        "APIKey": {
+          "type": "VARCHAR(300)",
+          "description": "Unique API key (used interchangeably with AuthCode in some endpoints)",
+          "example": "XXXXXXXXXXXXXXXXX"
+        }
+      },
+      "authentication_failure_responses": [
+        {
+          "error_code": "602",
+          "error_message": "Error: Invalid Auth Code. Please enter proper Auth Code.",
+          "format": "JSON"
+        },
+        {
+          "error_code": "611",
+          "error_message": "Unauthorized Access: Invalid Auth Code or Hotel Code.",
+          "format": "JSON"
+        },
+        {
+          "error_code": "614",
+          "error_message": "Sandbox User Trial Period is expired. So, you can't access it.",
+          "format": "JSON"
+        },
+        {
+          "error_code": "612",
+          "error_message": "Sandbox User Auth Code is inactive.",
+          "format": "JSON"
+        }
+      ],
+      "troubleshooting": [
+        "Ensure request includes a proper Authorization header",
+        "Verify sandbox account credentials are correct",
+        "Confirm you have access to the endpoint you are calling"
+      ]
+    },
+    "response_formats": ["XML", "JSON", "CSV"],
+    "http_methods": ["GET", "POST"],
+    "cors": {
+      "supported": true,
+      "note": "Never expose your secret API key in any public website's client-side code."
+    },
+    "api_categories": [
+      "Configuration",
+      "Rates & Availability",
+      "Bookings",
+      "Housekeeping"
+    ],
+    "connectivity_types": [
+      "PMS Connectivity",
+      "Kiosk Connectivity",
+      "POS Connectivity",
+      "Meta Search",
+      "RMS",
+      "Open"
+    ],
+    "endpoints": {
+      "configuration": {
+        "description": "Master data APIs used by connectivity partners for system mappings.",
+        "apis": [
+          {
+            "id": "check_hotel_authentication",
+            "name": "Check Hotel Authentication",
+            "description": "Checks authentication and returns hotel information if authentication is valid.",
+            "endpoint": "https://live.ipms247.com/index.php/page/service.pos2pms",
+            "method": "POST",
+            "response_format": "XML",
+            "connectivity_type": ["POS Connectivity"],
+            "headers": {
+              "Content-Type": "application/xml"
+            },
+            "request_parameters": [
+              {
+                "name": "auth",
+                "data_type": "VARCHAR(300)",
+                "required": true,
+                "description": "Unique Authentication code",
+                "example": "XXXXXXXXXXXXXXXXX"
+              },
+              {
+                "name": "oprn",
+                "data_type": "VARCHAR(150)",
+                "required": true,
+                "description": "Operation keyword. Use value: gethotelinfo",
+                "allowed_values": ["gethotelinfo"],
+                "example": "gethotelinfo"
+              }
+            ],
+            "request_example": {
+              "format": "XML",
+              "body": "<?xml version=\"1.0\" standalone=\"yes\"?>\n<request>\n     <auth>xxxxxxxxxxxxxxxxxxxxxxxxxxxxx</auth>\n     <oprn>gethotelinfo</oprn>\n</request>"
+            },
+            "response_parameters": [
+              {
+                "name": "status",
+                "data_type": "String",
+                "description": "Status of the request",
+                "allowed_values": ["ok", "error"],
+                "example": "ok"
+              },
+              {
+                "name": "msg",
+                "data_type": "String",
+                "description": "Result message",
+                "allowed_values": ["success", "<error message>"],
+                "example": "success"
+              },
+              {
+                "name": "hotelname",
+                "data_type": "String",
+                "description": "Name of the Hotel",
+                "example": "Mega Hills Hotel"
+              },
+              {
+                "name": "hotelcode",
+                "data_type": "Integer",
+                "description": "Unique ID of the Hotel",
+                "example": "xxxx"
+              }
+            ],
+            "success_response_example": {
+              "format": "XML",
+              "body": "<?xml version='1.0' standalone='yes'?>\n<response>\n    <status>ok</status>\n    <msg>success</msg>\n    <hotelname>Mega Hills Hotel</hotelname>\n    <hotelcode>xxxx</hotelcode>\n</response>"
+            },
+            "error_response_example": {
+              "format": "XML",
+              "body": "<?xml version='1.0' standalone='yes'?>\n<response>\n    <status>error</status>\n    <msg>Invalid Authentication</msg>\n</response>"
+            },
+            "error_codes": [
+              { "code": "Hotel Code In-Active", "description": "The Property has been deactivated" },
+              { "code": "API Authkey is deactivated", "description": "The Authcode/Key has been deactivated" },
+              { "code": "Invalid Authentication", "description": "Invalid data provided" },
+              { "code": "Bad Request", "description": "Invalid Request Parameter" },
+              { "code": "Invalid API Request. Don't have this API access", "description": "Invalid Request Method" }
+            ]
+          },
+          {
+            "id": "retrieve_room_information",
+            "name": "Retrieve Room Information",
+            "description": "Provides room types, rate types, and rate plans information for a property.",
+            "endpoint": "https://live.ipms247.com/pmsinterface/pms_connectivity.php",
+            "method": "POST",
+            "response_format": "JSON",
+            "connectivity_type": ["Kiosk Connectivity", "Open", "PMS Connectivity"],
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "request_parameters": [
+              {
+                "name": "Request_Type",
+                "data_type": "String",
+                "required": true,
+                "description": "Request operation keyword",
+                "allowed_values": ["RoomInfo"],
+                "example": "RoomInfo",
+                "location": "RES_Request.Request_Type"
+              },
+              {
+                "name": "NeedPhysicalRooms",
+                "data_type": "INT(2)",
+                "required": false,
+                "description": "Set to 1 to include physical room data in the response",
+                "allowed_values": [0, 1],
+                "example": 1,
+                "location": "RES_Request.NeedPhysicalRooms"
+              },
+              {
+                "name": "HotelCode",
+                "data_type": "INT(11)",
+                "required": true,
+                "description": "Unique Hotel code",
+                "example": "xxxx",
+                "location": "RES_Request.Authentication.HotelCode"
+              },
+              {
+                "name": "AuthCode",
+                "data_type": "VARCHAR(300)",
+                "required": true,
+                "description": "Unique Authentication code",
+                "example": "xxxxxxxxxxxx",
+                "location": "RES_Request.Authentication.AuthCode"
+              }
+            ],
+            "request_example": {
+              "format": "JSON",
+              "body": {
+                "RES_Request": {
+                  "Request_Type": "RoomInfo",
+                  "NeedPhysicalRooms": 1,
+                  "Authentication": {
+                    "HotelCode": "xxxx",
+                    "AuthCode": "xxxxxxxxxxxx"
+                  }
+                }
+              }
+            },
+            "response_parameters": [
+              { "name": "RoomType.ID", "data_type": "Integer", "description": "Unique RoomType ID", "example": "1234500000000000001" },
+              { "name": "RoomType.Name", "data_type": "String", "description": "RoomType Name", "example": "Garden View Studio Room" },
+              { "name": "RoomType.Rooms.RoomID", "data_type": "Integer", "description": "Room Unique ID", "example": "1234500000000000001" },
+              { "name": "RoomType.Rooms.RoomName", "data_type": "String", "description": "Room Number/Name", "example": "101" },
+              { "name": "RateType.ID", "data_type": "Integer", "description": "Unique RateType ID", "example": "1234500000000000001" },
+              { "name": "RateType.Name", "data_type": "String", "description": "RateType Name", "example": "European Plan" },
+              { "name": "RatePlan.RatePlanID", "data_type": "Integer", "description": "Unique RatePlan ID", "example": "1234500000000000001" },
+              { "name": "RatePlan.Name", "data_type": "String", "description": "RatePlan Name", "example": "Garden View Studio Room" },
+              { "name": "RatePlan.RoomTypeID", "data_type": "Integer", "description": "RoomType ID", "example": "1234500000000000001" },
+              { "name": "RatePlan.RoomType", "data_type": "String", "description": "RoomType Name", "example": "Garden View Studio Room" },
+              { "name": "RatePlan.RateTypeID", "data_type": "Integer", "description": "RateType ID", "example": "1234500000000000001" },
+              { "name": "RatePlan.RateType", "data_type": "String", "description": "RateType Name", "example": "European Plan" },
+              { "name": "RatePlan.RatePlanType", "data_type": "String", "description": "Rate plan type", "allowed_values": ["INDEPENDENT", "MASTER"], "example": "INDEPENDENT" },
+              { "name": "Errors.ErrorCode", "data_type": "String", "description": "Response Error Code", "example": "0" },
+              { "name": "Errors.ErrorMessage", "data_type": "String", "description": "Response Message", "example": "Success" }
+            ],
+            "success_response_example": {
+              "format": "JSON",
+              "body": {
+                "RoomInfo": {
+                  "RoomTypes": {
+                    "RoomType": [
+                      {
+                        "ID": "1234500000000000001",
+                        "Name": "Sea View Deluxe Room",
+                        "Rooms": [
+                          { "RoomID": "1234500000000000001", "RoomName": "101" },
+                          { "RoomID": "1234500000000000002", "RoomName": "102" }
+                        ]
+                      },
+                      {
+                        "ID": "1234500000000000002",
+                        "Name": "Garden View Studio Room",
+                        "Rooms": [
+                          { "RoomID": "1234500000000000004", "RoomName": "201" },
+                          { "RoomID": "1234500000000000005", "RoomName": "202" }
+                        ]
+                      }
+                    ]
+                  },
+                  "RateTypes": {
+                    "RateType": [
+                      { "ID": "1234500000000000001", "Name": "European Plan" },
+                      { "ID": "1234500000000000002", "Name": "Continental Plan" },
+                      { "ID": "1234500000000000005", "Name": "Indian Plan" }
+                    ]
+                  },
+                  "RatePlans": {
+                    "RatePlan": [
+                      {
+                        "RatePlanID": "1234500000000000001",
+                        "Name": "Sea View Deluxe Room",
+                        "RoomTypeID": "1234500000000000001",
+                        "RoomType": "Sea View Deluxe Room",
+                        "RateTypeID": "1234500000000000001",
+                        "RateType": "European Plan",
+                        "RatePlanType": "INDEPENDENT"
+                      },
+                      {
+                        "RatePlanID": "1234500000000000015",
+                        "Name": "Garden View Studio Room",
+                        "RoomTypeID": "1234500000000000002",
+                        "RoomType": "Garden View Studio Room",
+                        "RateTypeID": "1234500000000000001",
+                        "RateType": "European Plan",
+                        "RatePlanType": "MASTER"
+                      }
+                    ]
+                  }
+                },
+                "Errors": { "ErrorCode": "0", "ErrorMessage": "Success" }
+              }
+            },
+            "error_codes": [
+              { "code": "100", "description": "Missing required parameters." },
+              { "code": "500", "description": "Error occurred during processing" },
+              { "code": "502", "description": "Request Type is missing" },
+              { "code": "101", "description": "Hotel Code is missing" },
+              { "code": "102", "description": "Authentication Code is missing" },
+              { "code": "301", "description": "Unauthorized Request. Please check hotel code and authentication code" },
+              { "code": "302", "description": "Unauthorized Request. Integration is not allowed" },
+              { "code": "303", "description": "Auth Code is inactive." },
+              { "code": "201", "description": "Unauthorized request. (Request Type) request is not valid for this hotel code" },
+              { "code": "202", "description": "Unauthorized request. Hotel code is not active" }
+            ]
+          },
+          {
+            "id": "retrieve_hotel_information",
+            "name": "Retrieve Hotel Information",
+            "description": "Provides a list of hotel information for groups or chains. Mainly used for displaying data in combo boxes.",
+            "endpoint": "https://live.ipms247.com/booking/reservation_api/listing.php",
+            "method": "GET",
+            "response_format": "JSON",
+            "connectivity_type": ["Meta Search", "Open"],
+            "headers": {},
+            "url_templates": {
+              "chain_properties": "https://live.ipms247.com/booking/reservation_api/listing.php?request_type=HotelList&GroupCode={GroupCode}&APIKey={APIKey}&language={language}",
+              "single_property": "https://live.ipms247.com/booking/reservation_api/listing.php?request_type=HotelList&HotelCode={HotelCode}&APIKey={APIKey}&language={language}"
+            },
+            "request_parameters": [
+              { "name": "request_type", "data_type": "String", "required": true, "description": "Use keyword HotelList", "allowed_values": ["HotelList"], "location": "query_string" },
+              { "name": "GroupCode", "data_type": "INT(11)", "required": true, "description": "Unique Group code (use for chain properties)", "example": "XXXXXX", "condition": "Required for chain properties", "location": "query_string" },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code (use for single properties)", "example": "XXXX", "condition": "Required for single properties", "location": "query_string" },
+              { "name": "APIKey", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code", "example": "XXXXXXXXXXXXXXXXX", "location": "query_string" },
+              { "name": "language", "data_type": "VARCHAR(20)", "required": false, "description": "Language code. Default is 'en'. See language codes list in the portal.", "example": "en", "location": "query_string" }
+            ],
+            "request_examples": {
+              "single_property": "https://live.ipms247.com/booking/reservation_api/listing.php?request_type=HotelList&HotelCode=XXXX&APIKey=XXXXXX&language=en",
+              "chain_properties": "https://live.ipms247.com/booking/reservation_api/listing.php?request_type=HotelList&GroupCode=XXXXXX&APIKey=XXXXXX&language=en"
+            },
+            "response_parameters": [
+              { "name": "Hotel_Code", "data_type": "String", "description": "Unique Hotel code", "example": "xxxx" },
+              { "name": "Hotel_Name", "data_type": "String", "description": "Name of the hotel", "example": "Hotel Abc" },
+              { "name": "City", "data_type": "String", "description": "City where hotel is located", "example": "Surat" },
+              { "name": "State", "data_type": "String", "description": "State where hotel is located", "example": "Guj" },
+              { "name": "Country", "data_type": "String", "description": "Country where hotel is located", "example": "India" },
+              { "name": "Property_Type", "data_type": "String", "description": "Type of property", "example": "Resort" },
+              { "name": "HotelImages", "data_type": "Array of String", "description": "List of hotel image file names", "example": ["abc1.jpg", "abc21.jpg"] }
+            ],
+            "success_response_example": {
+              "format": "JSON",
+              "body": [
+                { "Hotel_Code": "xxxx", "Hotel_Name": "Hotel Abc", "City": "Surat", "State": "Guj", "Country": "India", "Property_Type": "Resort", "HotelImages": ["abc1.jpg", "abc21.jpg"] },
+                { "Hotel_Code": "xxxx", "Hotel_Name": "Hotel ZY", "City": "Surat", "State": "Gujarat", "Country": "India", "Property_Type": "Hotel", "HotelImages": ["img.jpg"] }
+              ]
+            },
+            "error_codes": [
+              { "code": "HotelCodeEmpty", "description": "Hotel code is empty." },
+              { "code": "NORESACC", "description": "This request is valid for Reservation Account only. You may not have opted for Reservation Account Or Hotel Code and Authentication are invalid." },
+              { "code": "UNAUTHREQ", "description": "Unauthorized request. This request is not valid for this hotel code." },
+              { "code": "HotelListingError", "description": "Hotel List error" },
+              { "code": "-1", "description": "No Data found." },
+              { "code": "APIACCESSDENIED", "description": "Your property doesn't have access to API integration or Key is incorrect. Please contact support." },
+              { "code": "ParametersMissing", "description": "Missing parameters." }
+            ]
+          },
+          {
+            "id": "retrieve_hotel_amenities",
+            "name": "Retrieve Hotel Amenities",
+            "description": "Provides the list of hotel amenities for a property, used for display on websites or external applications.",
+            "endpoint": "https://live.ipms247.com/booking/reservation_api/listing.php",
+            "method": "GET",
+            "response_format": "JSON",
+            "connectivity_type": ["Meta Search", "Open"],
+            "headers": {},
+            "url_template": "https://live.ipms247.com/booking/reservation_api/listing.php?request_type=HotelAmenity&HotelCode={HotelCode}&APIKey={APIKey}&language={language}",
+            "request_parameters": [
+              { "name": "request_type", "data_type": "String", "required": true, "description": "Use keyword HotelAmenity", "allowed_values": ["HotelAmenity"], "location": "query_string" },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code", "example": "XXXX", "location": "query_string" },
+              { "name": "APIKey", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code", "example": "XXXXXXXXXXXXXXXX", "location": "query_string" },
+              { "name": "language", "data_type": "VARCHAR(20)", "required": false, "description": "Language code. Default is 'en'.", "example": "en", "location": "query_string" }
+            ],
+            "request_example": "https://live.ipms247.com/booking/reservation_api/listing.php?request_type=HotelAmenity&HotelCode=XXX&APIKey=XXX&language=en",
+            "response_parameters": [
+              { "name": "amenity", "data_type": "String", "description": "Name of the amenity available at the hotel", "example": "parking lot" }
+            ],
+            "success_response_example": {
+              "format": "JSON",
+              "body": [
+                { "amenity": "Chinar Hotel @ Spa Naftalan" },
+                { "amenity": "STD and IDD dialing access" },
+                { "amenity": "parking lot" },
+                { "amenity": "Fruit basket upon check-in" }
+              ]
+            },
+            "error_codes": [
+              { "code": "HotelCodeEmpty", "description": "Hotel code is empty." },
+              { "code": "NORESACC", "description": "This request is valid for Reservation Account only." },
+              { "code": "UNAUTHREQ", "description": "Unauthorized request. This request is not valid for this hotel code." },
+              { "code": "HotelAmenityListingError", "description": "Hotel amenity listing error." },
+              { "code": "-1", "description": "No Data found." },
+              { "code": "APIACCESSDENIED", "description": "Your property doesn't have access to API integration or Key is incorrect." },
+              { "code": "ParametersMissing", "description": "Missing parameters." }
+            ]
+          },
+          {
+            "id": "retrieve_room_types",
+            "name": "Retrieve Room Types",
+            "description": "Provides limited room type information for a property, useful for mapping or display in external applications.",
+            "endpoint": "https://live.ipms247.com/booking/reservation_api/listing.php",
+            "method": "GET",
+            "response_format": "JSON",
+            "connectivity_type": ["Meta Search", "Open"],
+            "headers": {},
+            "url_template": "https://live.ipms247.com/booking/reservation_api/listing.php?request_type=RoomTypeList&HotelCode={HotelCode}&APIKey={APIKey}&language={language}&publishtoweb={publishtoweb}",
+            "request_parameters": [
+              { "name": "request_type", "data_type": "String", "required": true, "description": "Use keyword RoomTypeList", "allowed_values": ["RoomTypeList"], "location": "query_string" },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code", "example": "XXXX", "location": "query_string" },
+              { "name": "APIKey", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code", "example": "XXXXXXXXXXXXXXXXX", "location": "query_string" },
+              { "name": "language", "data_type": "VARCHAR(20)", "required": false, "description": "Language code. Default is 'en'.", "example": "en", "location": "query_string" },
+              { "name": "publishtoweb", "data_type": "TINYINT(1)", "required": false, "description": "1 = retrieve all room types; 0 = retrieve only room types published to web. Default is 0.", "allowed_values": [0, 1], "default": 0, "location": "query_string" }
+            ],
+            "request_example": "https://live.ipms247.com/booking/reservation_api/listing.php?request_type=RoomTypeList&HotelCode=XXX&APIKey=XXX&language=en&publishtoweb=1",
+            "response_parameters": [
+              { "name": "roomtypeunkid", "data_type": "INT(20)", "description": "Unique Room Type ID", "example": "123400000000000001" },
+              { "name": "roomtype", "data_type": "VARCHAR(255)", "description": "Room Type Name", "example": "King" },
+              { "name": "shortcode", "data_type": "String", "description": "Short code for the room type", "example": "KNG" },
+              { "name": "base_adult_occupancy", "data_type": "INT(11)", "description": "Base adult occupancy in room", "example": "2" },
+              { "name": "base_child_occupancy", "data_type": "INT(11)", "description": "Base child occupancy in room", "example": "2" },
+              { "name": "max_adult_occupancy", "data_type": "INT(11)", "description": "Maximum adult occupancy in room", "example": "4" },
+              { "name": "max_child_occupancy", "data_type": "INT(11)", "description": "Maximum child occupancy in room", "example": "4" }
+            ],
+            "success_response_example": {
+              "format": "JSON",
+              "body": [
+                { "roomtypeunkid": "123400000000000001", "roomtype": "King", "shortcode": "KNG", "base_adult_occupancy": "2", "base_child_occupancy": "2", "max_adult_occupancy": "4", "max_child_occupancy": "4" },
+                { "roomtypeunkid": "123400000000000004", "roomtype": "Deluxe", "shortcode": "DLX", "base_adult_occupancy": "5", "base_child_occupancy": "5", "max_adult_occupancy": "6", "max_child_occupancy": "7" },
+                { "roomtypeunkid": "123400000000000006", "roomtype": "Suite River View", "shortcode": "SRV", "base_adult_occupancy": "3", "base_child_occupancy": "2", "max_adult_occupancy": "5", "max_child_occupancy": "3" }
+              ]
+            },
+            "error_codes": [
+              { "code": "HotelCodeEmpty", "description": "Hotel code is empty." },
+              { "code": "NORESACC", "description": "This request is valid for Reservation Account only." },
+              { "code": "UNAUTHREQ", "description": "Unauthorized request. This request is not valid for this hotel code." },
+              { "code": "getRoomTypeListError", "description": "Room Type List error" },
+              { "code": "-1", "description": "No Data found." },
+              { "code": "APIACCESSDENIED", "description": "Your property doesn't have access to API integration or Key is incorrect." },
+              { "code": "ParametersMissing", "description": "Missing parameters." }
+            ]
+          },
+          {
+            "id": "retrieve_salutations_and_country",
+            "name": "Retrieve Salutations and Country",
+            "description": "Provides salutation codes and country list configured for a property, for display in external applications.",
+            "endpoint": "https://live.ipms247.com/booking/reservation_api/listing.php",
+            "method": "GET",
+            "response_format": "JSON",
+            "connectivity_type": ["Meta Search", "Open"],
+            "headers": {},
+            "url_template": "https://live.ipms247.com/booking/reservation_api/listing.php?request_type=ConfiguredDetails&HotelCode={HotelCode}&APIKey={APIKey}&language={language}",
+            "request_parameters": [
+              { "name": "request_type", "data_type": "String", "required": true, "description": "Use keyword ConfiguredDetails", "allowed_values": ["ConfiguredDetails"], "location": "query_string" },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code", "example": "XXXX", "location": "query_string" },
+              { "name": "APIKey", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code", "example": "XXXXXXXXXXXXXXXXX", "location": "query_string" },
+              { "name": "language", "data_type": "VARCHAR(20)", "required": false, "description": "Language code. Default is 'en'.", "example": "en", "location": "query_string" }
+            ],
+            "request_example": "https://live.ipms247.com/booking/reservation_api/listing.php?request_type=ConfiguredDetails&HotelCode=XXXX&APIKey=XXXXXX&language=en",
+            "response_parameters": [
+              { "name": "Salutation", "data_type": "Object", "description": "Key-value map of salutation codes to salutation labels", "example": { "MR": "Mr.", "MRS": "Mrs.", "MS": "Ms." } },
+              { "name": "CountryList", "data_type": "Object", "description": "Key-value map of country IDs to country names", "example": { "1": "Afghanistan", "2": "Albania" } }
+            ],
+            "success_response_example": {
+              "format": "JSON",
+              "body": {
+                "Salutation": { "DR": "Dr.", "JN": "Jn.", "MAM": "Mam.", "MR": "Mr.", "MRS": "Mrs.", "MS": "Ms.", "SIR": "Sir", "SR": "Sr." },
+                "CountryList": { "1": "Afghanistan", "2": "Albania", "3": "Algeria" }
+              }
+            },
+            "error_codes": [
+              { "code": "HotelCodeEmpty", "description": "Hotel code is empty." },
+              { "code": "NORESACC", "description": "This request is valid for Reservation Account only." },
+              { "code": "UNAUTHREQ", "description": "Unauthorized request." },
+              { "code": "2", "description": "Cannot Parse Request" },
+              { "code": "5", "description": "Recoverable Error. Equivalent to HTTP 503." },
+              { "code": "DBConnectError", "description": "Database not connected." },
+              { "code": "BadRequest", "description": "Bad request type." },
+              { "code": "-1", "description": "No Data found." },
+              { "code": "APIACCESSDENIED", "description": "Your property doesn't have access to API integration or Key is incorrect." },
+              { "code": "ParametersMissing", "description": "Missing parameters." },
+              { "code": "UnknownError", "description": "Unknown Error" },
+              { "code": "4", "description": "Timeout requested. Stops requests for the specified time." },
+              { "code": "InvalidHotelCode", "description": "Invalid Hotel code. Please check your property code." }
+            ]
+          },
+          {
+            "id": "retrieve_extras_rate",
+            "name": "Retrieve Extras Rate Based on Parameters",
+            "description": "Calculates total extra service charge based on configured Extra Charges, check-in date, and check-out date. Supports both single and multiple extra charges. Requires eZee Reservation.",
+            "endpoint": "https://live.ipms247.com/booking/reservation_api/listing.php",
+            "method": "GET",
+            "response_format": "JSON",
+            "connectivity_type": ["eZee Reservation Required", "Meta Search"],
+            "requires": "eZee Reservation",
+            "headers": {},
+            "url_template": "https://live.ipms247.com/booking/reservation_api/listing.php?request_type=CalculateExtraCharge&HotelCode={HotelCode}&APIKey={APIKey}&check_in_date={check_in_date}&check_out_date={check_out_date}&ExtraChargeId={ExtraChargeId}&Total_ExtraItem={Total_ExtraItem}",
+            "request_parameters": [
+              { "name": "request_type", "data_type": "String", "required": true, "description": "Use keyword CalculateExtraCharge", "allowed_values": ["CalculateExtraCharge"], "location": "query_string" },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code", "example": "XXXX", "location": "query_string" },
+              { "name": "APIKey", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code", "example": "XXXXXXXXXXXXXXXX", "location": "query_string" },
+              { "name": "check_in_date", "data_type": "DATE", "required": true, "description": "Check-in date in YYYY-MM-DD format", "example": "2020-07-05", "location": "query_string" },
+              { "name": "check_out_date", "data_type": "DATE", "required": true, "description": "Check-out date in YYYY-MM-DD format", "example": "2020-07-07", "location": "query_string" },
+              { "name": "ExtraChargeId", "data_type": "VARCHAR(300)", "required": true, "description": "Single or multiple comma-separated extra charge IDs for the property", "example_single": "XXX", "example_multiple": "XXX,YYY", "location": "query_string" },
+              { "name": "Total_ExtraItem", "data_type": "VARCHAR(300)", "required": true, "description": "Total number of items per extra charge. For Per Pax rule: Adults + Children. For Per Quantity: quantity. Comma-separated for multiple charges.", "example_single": "2", "example_multiple": "2,3", "notes": ["Sample 1: Extra charge Rule Per Pax, Adults: 2, Child: 1 → Pass Total_ExtraItem=3", "Sample 2: Extra charge Rule Per Quantity, Quantity: 2 → Pass Total_ExtraItem=2"], "location": "query_string" }
+            ],
+            "response_parameters": [
+              { "name": "IndividualCharge", "data_type": "Object", "description": "Map of extra charge IDs to their individual calculated charges", "example": { "XXX": 150, "YYY": 10 } },
+              { "name": "TotalCharge", "data_type": "Number", "description": "Total of all combined extra charges", "example": 160 }
+            ],
+            "success_response_example": {
+              "format": "JSON",
+              "body": { "IndividualCharge": { "XXX": 150, "YYY": 10 }, "TotalCharge": 160 }
+            },
+            "error_codes": [
+              { "code": "HotelCodeEmpty", "description": "Hotel code is empty." },
+              { "code": "NORESACC", "description": "This request is valid for Reservation Account only." },
+              { "code": "UNAUTHREQ", "description": "Unauthorized request." },
+              { "code": "2", "description": "Cannot Parse Request" },
+              { "code": "5", "description": "Recoverable Error. Equivalent to HTTP 503." },
+              { "code": "CheckDate", "description": "Check out date should be greater than Check in date" },
+              { "code": "DBConnectError", "description": "Database not connected." },
+              { "code": "getExtraChargeListError", "description": "Extra Charge List error" },
+              { "code": "-1", "description": "No Data found." },
+              { "code": "APIACCESSDENIED", "description": "Your property doesn't have access to API integration or Key is incorrect." },
+              { "code": "ParametersMissing", "description": "Missing parameters." },
+              { "code": "UnknownError", "description": "Unknown Error" },
+              { "code": "4", "description": "Timeout requested." },
+              { "code": "InvalidHotelCode", "description": "Invalid Hotel code." },
+              { "code": "BadRequest", "description": "Bad request type." }
+            ]
+          },
+          {
+            "id": "verify_travel_agent",
+            "name": "Verify Travel Agent",
+            "description": "Verifies a Travel Agent user and returns verified Travel Agent information for properties where the agent is created. Requires eZee Reservation.",
+            "endpoint": "https://live.ipms247.com/booking/reservation_api/listing.php",
+            "method": "GET",
+            "response_format": "JSON",
+            "connectivity_type": ["eZee Reservation Required", "Meta Search"],
+            "requires": "eZee Reservation",
+            "headers": {},
+            "url_template": "https://live.ipms247.com/booking/reservation_api/listing.php?APIKey={APIKey}&request_type=VerifyUser&username={username}&password={password}&groupcode={groupcode}",
+            "request_parameters": [
+              { "name": "request_type", "data_type": "String", "required": true, "description": "Use keyword VerifyUser", "allowed_values": ["VerifyUser"], "location": "query_string" },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code", "example": "XXXX", "location": "query_string" },
+              { "name": "APIKey", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code", "example": "XXXXXXXXXXXXXXXX", "location": "query_string" },
+              { "name": "username", "data_type": "VARCHAR(300)", "required": true, "description": "Travel agent username", "example": "XXXXXXXXX", "location": "query_string" },
+              { "name": "password", "data_type": "VARCHAR(300)", "required": true, "description": "Base64 encoded encrypted password. Use base64_encode() to encode password.", "example": "base64_encode($password)", "encoding": "Base64", "location": "query_string" },
+              { "name": "groupcode", "data_type": "VARCHAR(300)", "required": true, "description": "Unique group code for a registered chain of properties", "example": "XXXXX", "location": "query_string" }
+            ],
+            "response_parameters": [
+              { "name": "contactunkid", "data_type": "Integer(20)", "description": "Unique contact ID", "example": "2600000000001612" },
+              { "name": "salutation", "data_type": "String", "description": "Salutation of the user", "example": "Mr." },
+              { "name": "business_name", "data_type": "String", "description": "Name of the business", "example": "OLX" },
+              { "name": "name", "data_type": "String", "description": "Full name of the user", "example": "Maximum" },
+              { "name": "address", "data_type": "String", "description": "Address of the user", "example": "3817 Sugar Camp Road" },
+              { "name": "city", "data_type": "String", "description": "City name", "example": "New York" },
+              { "name": "state", "data_type": "String", "description": "State name", "example": "New York" },
+              { "name": "zipcode", "data_type": "Integer", "description": "ZIP / postal code", "example": "123456" },
+              { "name": "country", "data_type": "String", "description": "Country name", "example": "India" },
+              { "name": "phone", "data_type": "Integer", "description": "Phone number", "example": "123456789" },
+              { "name": "mobile", "data_type": "Integer", "description": "Mobile number", "example": "1234567890" },
+              { "name": "email", "data_type": "String", "description": "Email address", "example": "user@example.com" },
+              { "name": "isusercreated", "data_type": "String", "description": "Whether user was created (1 = yes, 0 = no)", "allowed_values": ["1", "0"] }
+            ],
+            "error_codes": [
+              { "code": "HotelCodeEmpty", "description": "Hotel code is empty." },
+              { "code": "NORESACC1", "description": "This request is valid for Reservation Account only. Groups Code and Authentication may be invalid." },
+              { "code": "UNAUTHREQ", "description": "Unauthorized request." },
+              { "code": "2", "description": "Cannot Parse Request" },
+              { "code": "DBConnectError", "description": "Database not connected." },
+              { "code": "BadRequest", "description": "Bad request type." },
+              { "code": "-1", "description": "No Data found." },
+              { "code": "APIACCESSDENIED", "description": "Your property doesn't have access to API integration or Key is incorrect." },
+              { "code": "INVUSEPASS", "description": "Invalid Username and Password." },
+              { "code": "UnknownError", "description": "Unknown Error" },
+              { "code": "InvalidHotelCode", "description": "Invalid Hotel code." }
+            ]
+          },
+          {
+            "id": "retrieve_payment_gateways",
+            "name": "Retrieve Payment Gateways",
+            "description": "Provides all configured payment gateways available for the Booking Engine. Requires eZee Reservation.",
+            "endpoint": "https://live.ipms247.com/booking/reservation_api/listing.php",
+            "method": "GET",
+            "response_format": "JSON",
+            "connectivity_type": ["eZee Reservation Required", "Meta Search", "Open"],
+            "requires": "eZee Reservation",
+            "headers": {},
+            "url_template": "https://live.ipms247.com/booking/reservation_api/listing.php?APIKey={APIKey}&request_type=ConfiguredPGList&HotelCode={HotelCode}",
+            "request_parameters": [
+              { "name": "request_type", "data_type": "String", "required": true, "description": "Use keyword ConfiguredPGList", "allowed_values": ["ConfiguredPGList"], "location": "query_string" },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code", "example": "XXXX", "location": "query_string" },
+              { "name": "APIKey", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code", "example": "XXXXXXXXXXXXXXXX", "location": "query_string" }
+            ],
+            "response_parameters": [
+              { "name": "paymenttypeunkid", "data_type": "Integer(20)", "description": "Unique Payment gateway ID", "example": "4000000000000048" },
+              { "name": "hotel_code", "data_type": "Integer(11)", "description": "Unique hotel code", "example": "1234" },
+              { "name": "shortcode", "data_type": "String", "description": "Payment gateway short code", "example": "AirPay" },
+              { "name": "paymenttype", "data_type": "String", "description": "Payment gateway name", "example": "AirPay" }
+            ],
+            "success_response_example": {
+              "format": "JSON",
+              "body": [{ "paymenttypeunkid": "4000000000000048", "hotel_code": "1234", "shortcode": "AirPay", "paymenttype": "AirPay" }]
+            },
+            "error_codes": [
+              { "code": "HotelCodeEmpty", "description": "Hotel code is empty." },
+              { "code": "NORESACC", "description": "This request is valid for Reservation Account only." },
+              { "code": "UNAUTHREQ", "description": "Unauthorized request." },
+              { "code": "2", "description": "Cannot Parse Request" },
+              { "code": "DBConnectError", "description": "Database not connected." },
+              { "code": "-1", "description": "No Data found." },
+              { "code": "APIACCESSDENIED", "description": "Your property doesn't have access to API integration or Key is incorrect." },
+              { "code": "BadRequest", "description": "Bad request type." },
+              { "code": "UnknownError", "description": "Unknown Error" },
+              { "code": "InvalidHotelCode", "description": "Invalid Hotel code." }
+            ]
+          },
+          {
+            "id": "retrieve_currency",
+            "name": "Retrieve Currency",
+            "description": "Returns all active currencies available in the hotel, including exchange rate, base currency flag, and symbol.",
+            "endpoint": "https://live.ipms247.com/index.php/page/service.kioskconnectivity",
+            "method": "POST",
+            "response_format": "JSON",
+            "connectivity_type": ["Kiosk Connectivity", "Open"],
+            "headers": { "Content-Type": "application/json" },
+            "request_parameters": [
+              { "name": "Request_Type", "data_type": "VARCHAR(100)", "required": true, "description": "Use keyword RetrieveCurrency", "allowed_values": ["RetrieveCurrency"], "location": "RES_Request.Request_Type" },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code", "example": "xxxx", "location": "RES_Request.Authentication.HotelCode" },
+              { "name": "AuthCode", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code", "example": "xxxxxxxxxxxx", "location": "RES_Request.Authentication.AuthCode" }
+            ],
+            "request_example": {
+              "format": "JSON",
+              "body": { "RES_Request": { "Request_Type": "RetrieveCurrency", "Authentication": { "HotelCode": "xxxx", "AuthCode": "xxxxxxxxxxxx" } } }
+            },
+            "response_parameters": [
+              { "name": "CurrencyList.CurrencyID", "data_type": "Integer", "description": "Currency Unique ID", "example": "1234500000000000001" },
+              { "name": "CurrencyList.Country", "data_type": "String", "description": "Country name", "example": "India" },
+              { "name": "CurrencyList.Currency", "data_type": "String", "description": "Currency Name", "example": "Rupees" },
+              { "name": "CurrencyList.CurrencyCode", "data_type": "String", "description": "ISO currency code", "example": "INR" },
+              { "name": "CurrencyList.Sign", "data_type": "String", "description": "Currency symbol", "example": "₹" },
+              { "name": "CurrencyList.DigitsAfterDecimal", "data_type": "Integer", "description": "Number of decimal places used", "example": 2 },
+              { "name": "CurrencyList.IsBaseCurrency", "data_type": "String", "description": "Whether this is the base currency (1=yes, 0=no)", "allowed_values": ["0", "1"] },
+              { "name": "CurrencyList.ExchangeRate", "data_type": "Decimal", "description": "Exchange rate relative to base currency", "example": "15.0000" }
+            ],
+            "error_codes": [
+              { "code": "100", "description": "Missing required parameters" },
+              { "code": "500", "description": "Error occurred during processing." },
+              { "code": "502", "description": "Request Type is missing" },
+              { "code": "101", "description": "Hotel Code is missing" },
+              { "code": "102", "description": "Authentication Code is missing" },
+              { "code": "301", "description": "Unauthorized Request. Please check hotel code and authentication code" },
+              { "code": "302", "description": "Unauthorized Request. Integration is not allowed" },
+              { "code": "303", "description": "Auth Code is inactive" },
+              { "code": "201", "description": "Unauthorized request. Request Type is not valid for this hotel code" },
+              { "code": "202", "description": "Unauthorized request. Hotel code is not active" },
+              { "code": "203", "description": "No Data Found" }
+            ]
+          },
+          {
+            "id": "retrieve_pay_methods",
+            "name": "Retrieve Pay Methods",
+            "description": "Returns all active payment methods available in the hotel, including surcharge details.",
+            "endpoint": "https://live.ipms247.com/index.php/page/service.kioskconnectivity",
+            "method": "POST",
+            "response_format": "JSON",
+            "connectivity_type": ["Kiosk Connectivity", "Open"],
+            "headers": { "Content-Type": "application/json" },
+            "request_parameters": [
+              { "name": "Request_Type", "data_type": "VARCHAR(100)", "required": true, "description": "Use keyword RetrievePayMethods", "allowed_values": ["RetrievePayMethods"], "location": "RES_Request.Request_Type" },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code", "location": "RES_Request.Authentication.HotelCode" },
+              { "name": "AuthCode", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code", "location": "RES_Request.Authentication.AuthCode" }
+            ],
+            "response_parameters": [
+              { "name": "PayMethods.PayMethodID", "data_type": "Integer", "description": "Pay Method Unique ID" },
+              { "name": "PayMethods.PaymentID", "data_type": "String", "description": "Payment Unique ID" },
+              { "name": "PayMethods.Name", "data_type": "String", "description": "Pay Method Name", "example": "Cash" },
+              { "name": "PayMethods.ShortCode", "data_type": "String", "description": "Pay Method Short Code", "example": "Cash" },
+              { "name": "PayMethods.Type", "data_type": "String", "description": "Pay Method Type", "allowed_values": ["Cash", "Bank"] },
+              { "name": "PayMethods.CardProcessing", "data_type": "Integer", "description": "Card processing flag", "allowed_values": [0, 1] },
+              { "name": "PayMethods.SurchargeApplicable", "data_type": "String", "description": "Whether surcharge applies (1=yes, 0=no)", "allowed_values": ["0", "1"] },
+              { "name": "PayMethods.SurchargeType", "data_type": "String", "description": "Type of surcharge", "allowed_values": ["FlatPercent", "Amount"] },
+              { "name": "PayMethods.SurchargeValue", "data_type": "Decimal", "description": "Surcharge value amount", "example": "5" },
+              { "name": "PayMethods.SurchargeID", "data_type": "Integer", "description": "Surcharge Unique ID" },
+              { "name": "PayMethods.SurchargeName", "data_type": "String", "description": "Surcharge Name", "example": "Surcharge" }
+            ],
+            "error_codes": [
+              { "code": "100", "description": "Missing required parameters" },
+              { "code": "203", "description": "Payment Methods are not available in this hotel" }
+            ]
+          },
+          {
+            "id": "retrieve_identity_type",
+            "name": "Retrieve Identity Type",
+            "description": "Returns all active identity types (e.g., Passport, Driving License) configured in the hotel.",
+            "endpoint": "https://live.ipms247.com/index.php/page/service.kioskconnectivity",
+            "method": "POST",
+            "response_format": "JSON",
+            "connectivity_type": ["Kiosk Connectivity", "Open"],
+            "headers": { "Content-Type": "application/json" },
+            "request_parameters": [
+              { "name": "Request_Type", "data_type": "VARCHAR(100)", "required": true, "description": "Use keyword RetrieveIdentityType", "allowed_values": ["RetrieveIdentityType"], "location": "RES_Request.Request_Type" },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code", "location": "RES_Request.Authentication.HotelCode" },
+              { "name": "AuthCode", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code", "location": "RES_Request.Authentication.AuthCode" }
+            ],
+            "response_parameters": [
+              { "name": "IdentityType.IdentityTypeID", "data_type": "Integer", "description": "Identity Type Unique ID", "example": "1234500000000000001" },
+              { "name": "IdentityType.Name", "data_type": "String", "description": "Identity Type Name", "example": "Passport" }
+            ],
+            "success_response_example": {
+              "body": { "Success": { "IdentityType": [{ "IdentityTypeID": "1234500000000000001", "Name": "Passport" }, { "IdentityTypeID": "1234500000000000002", "Name": "Driving License" }] }, "Errors": { "ErrorCode": "0", "ErrorMessage": "Success" } }
+            }
+          },
+          {
+            "id": "retrieve_available_room_list",
+            "name": "Retrieve Available Room List",
+            "description": "Fetches available room data between check-in and check-out dates. Optionally filter by specific Room ID or Room Type ID.",
+            "endpoint": "https://live.ipms247.com/index.php/page/service.kioskconnectivity",
+            "method": "POST",
+            "response_format": "JSON",
+            "connectivity_type": ["Kiosk Connectivity", "Open"],
+            "headers": { "Content-Type": "application/json" },
+            "request_parameters": [
+              { "name": "Request_Type", "data_type": "VARCHAR(100)", "required": true, "description": "Use keyword RoomAvailability", "allowed_values": ["RoomAvailability"], "location": "RES_Request.Request_Type" },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code", "location": "RES_Request.Authentication.HotelCode" },
+              { "name": "AuthCode", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code", "location": "RES_Request.Authentication.AuthCode" },
+              { "name": "from_date", "data_type": "DATE", "required": true, "description": "Check-In Date (YYYY-MM-DD)", "example": "2021-12-05", "location": "RES_Request.RoomData.from_date" },
+              { "name": "to_date", "data_type": "DATE", "required": true, "description": "Check-Out Date (YYYY-MM-DD)", "example": "2021-12-06", "location": "RES_Request.RoomData.to_date" },
+              { "name": "RoomID", "data_type": "INT(11)", "required": false, "description": "Optional. Filter by specific Room Unique ID", "example": "123400000000000002", "location": "RES_Request.RoomData.RoomID" },
+              { "name": "RoomtypeID", "data_type": "INT(11)", "required": false, "description": "Optional. Filter by specific Room Type Unique ID", "example": "123400000000000002", "location": "RES_Request.RoomData.RoomtypeID" }
+            ],
+            "response_parameters": [
+              { "name": "RoomList.RoomtypeID", "data_type": "Integer", "description": "Room Type Unique ID" },
+              { "name": "RoomList.RoomtypeName", "data_type": "Varchar", "description": "Room Type Name" },
+              { "name": "RoomList.RoomData.RoomID", "data_type": "Integer", "description": "Room Unique ID" },
+              { "name": "RoomList.RoomData.RoomName", "data_type": "Varchar", "description": "Room Name or Number" }
+            ],
+            "error_codes": [
+              { "code": "105", "description": "From Date is missing" },
+              { "code": "106", "description": "From Date is not a valid date" },
+              { "code": "107", "description": "To Date is missing" },
+              { "code": "108", "description": "To Date is not a valid date" },
+              { "code": "109", "description": "To Date should be greater than From Date" },
+              { "code": "111", "description": "Missing or Invalid Parameter: RoomData" },
+              { "code": "121", "description": "Invalid Value. Please check with RoomType Data" },
+              { "code": "122", "description": "Invalid Value. Please check with Room Data" },
+              { "code": "301", "description": "No Data Found" }
+            ]
+          }
+        ]
+      },
+      "rates_and_availability": {
+        "description": "Use the Rates & Availability APIs to set availability, rates, and restrictions for a property's rooms.",
+        "apis": [
+          {
+            "id": "update_room_inventory",
+            "name": "Update Room Inventory",
+            "description": "Updates room inventory (availability count) for a specified date range and room type. Availability is set at the room type level only — not at the rate plan level.",
+            "endpoint": "https://live.ipms247.com/pmsinterface/pms_connectivity.php",
+            "method": "POST",
+            "response_format": "JSON",
+            "connectivity_type": ["PMS Connectivity"],
+            "headers": { "Content-Type": "application/json" },
+            "important_notes": [
+              "Availability is specified per room type, not per rate plan.",
+              "Example: If room type A has 10 rooms total, you cannot split it as 3 for rate plan X and 7 for rate plan Y. You can only set total availability = 10."
+            ],
+            "request_parameters": [
+              { "name": "Request_Type", "required": true, "description": "Use keyword UpdateAvailability", "allowed_values": ["UpdateAvailability"], "location": "RES_Request.Request_Type" },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code", "location": "RES_Request.Authentication.HotelCode" },
+              { "name": "AuthCode", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code", "location": "RES_Request.Authentication.AuthCode" },
+              { "name": "RoomTypeID", "data_type": "INT(20)", "required": true, "description": "Unique RoomType ID", "example": "112500000000000001", "location": "RES_Request.RoomType[].RoomTypeID" },
+              { "name": "FromDate", "data_type": "DATETIME", "required": true, "description": "Start date for inventory update (YYYY-MM-DD)", "example": "2020-07-25", "location": "RES_Request.RoomType[].FromDate" },
+              { "name": "ToDate", "data_type": "DATETIME", "required": true, "description": "End date for inventory update (YYYY-MM-DD)", "example": "2020-07-27", "location": "RES_Request.RoomType[].ToDate" },
+              { "name": "Availability", "data_type": "Integer", "required": true, "description": "Number of rooms available (inventory count)", "example": "9", "location": "RES_Request.RoomType[].Availability" }
+            ],
+            "request_example": {
+              "format": "JSON",
+              "body": {
+                "RES_Request": {
+                  "Request_Type": "UpdateAvailability",
+                  "Authentication": { "HotelCode": "xxxx", "AuthCode": "xxxxxxxxxxxx" },
+                  "RoomType": [
+                    { "RoomTypeID": "112400000000000002", "FromDate": "2019-06-24", "ToDate": "2019-06-30", "Availability": "9" },
+                    { "RoomTypeID": "112400000000000002", "FromDate": "2019-06-14", "ToDate": "2019-06-20", "Availability": "9" }
+                  ]
+                }
+              }
+            },
+            "success_response_example": {
+              "body": { "Success": { "SuccessMsg": "Room Inventory Successfully Updated" }, "Errors": { "ErrorCode": "0", "ErrorMessage": "Success" } }
+            },
+            "error_codes": [
+              { "code": "100", "description": "Missing required parameters." },
+              { "code": "103", "description": "Room type is missing" },
+              { "code": "110", "description": "Inventory value is missing" },
+              { "code": "111", "description": "Invalid inventory value" },
+              { "code": "134", "description": "All Sources are using inventory of another source; no update allowed." }
+            ]
+          },
+          {
+            "id": "update_linear_rate",
+            "name": "Update Linear Rate",
+            "description": "Sets linear (flat) room rates for a specified date range. Rates are defined per Room Type and Rate Type combination. Linear pricing applies a fixed rate for the base occupancy plus additional flat amounts per extra adult or child.",
+            "endpoint": "https://live.ipms247.com/pmsinterface/pms_connectivity.php",
+            "method": "POST",
+            "response_format": "JSON",
+            "connectivity_type": ["PMS Connectivity"],
+            "headers": { "Content-Type": "application/json" },
+            "pricing_model_explanation": "In linear pricing, you set a base price for the standard occupancy. Additional charges for extra adults and children are flat amounts. Example: Base price $3000 for 2 adults + 1 child. Extra adult = $500. Extra child = $300.",
+            "request_parameters": [
+              { "name": "Request_Type", "required": true, "description": "Use keyword UpdateRoomRates", "allowed_values": ["UpdateRoomRates"], "location": "RES_Request.Request_Type" },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code", "location": "RES_Request.Authentication.HotelCode" },
+              { "name": "AuthCode", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code", "location": "RES_Request.Authentication.AuthCode" },
+              { "name": "Sources.ContactId", "data_type": "VARCHAR(100)", "required": false, "description": "Array of Source Contact IDs for targeted rate updates", "example": ["112400000000000873", "112400000000000087"] },
+              { "name": "RateType.RoomTypeID", "data_type": "INT(20)", "required": true, "description": "Unique RoomType ID", "location": "RES_Request.RateType[].RoomTypeID" },
+              { "name": "RateType.RateTypeID", "data_type": "INT(20)", "required": true, "description": "Unique RateType ID", "location": "RES_Request.RateType[].RateTypeID" },
+              { "name": "RateType.FromDate", "data_type": "DATETIME", "required": true, "description": "Rate effective from date (YYYY-MM-DD)", "location": "RES_Request.RateType[].FromDate" },
+              { "name": "RateType.ToDate", "data_type": "DATETIME", "required": true, "description": "Rate effective to date (YYYY-MM-DD)", "location": "RES_Request.RateType[].ToDate" },
+              { "name": "RateType.RoomRate.Base", "data_type": "DECIMAL(19,4)", "required": true, "description": "Base room rate amount", "example": "159", "location": "RES_Request.RateType[].RoomRate.Base" },
+              { "name": "RateType.RoomRate.ExtraAdult", "data_type": "DECIMAL(19,4)", "required": false, "description": "Extra adult rate amount", "example": "80", "location": "RES_Request.RateType[].RoomRate.ExtraAdult" },
+              { "name": "RateType.RoomRate.ExtraChild", "data_type": "DECIMAL(19,4)", "required": false, "description": "Extra child rate amount", "example": "50", "location": "RES_Request.RateType[].RoomRate.ExtraChild" }
+            ],
+            "error_codes": [
+              { "code": "113", "description": "Invalid base rate" },
+              { "code": "114", "description": "Invalid extra adult rate" },
+              { "code": "115", "description": "Invalid extra child rate" },
+              { "code": "121", "description": "No Rates to update" }
+            ]
+          },
+          {
+            "id": "update_non_linear_rate",
+            "name": "Update Non-Linear Rate",
+            "description": "Sets occupancy-based (non-linear) room rates for a specified date range. Rates are defined per Room Type and Rate Type combination. Allows individually configured charges for each adult/child count from 1 to 7.",
+            "endpoint": "https://live.ipms247.com/pmsinterface/pms_connectivity.php",
+            "method": "POST",
+            "response_format": "JSON",
+            "connectivity_type": ["PMS Connectivity"],
+            "headers": { "Content-Type": "application/json" },
+            "pricing_model_explanation": "In non-linear pricing, you independently configure the cost per occupancy level. Example: Base $3000 for 2 adults + 1 child. Extra child 1 = $300. Extra child 2 = $400. This gives maximum pricing flexibility.",
+            "request_parameters": [
+              { "name": "Request_Type", "required": true, "description": "Use keyword UpdateRoomRatesNL", "allowed_values": ["UpdateRoomRatesNL"] },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code" },
+              { "name": "AuthCode", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code" },
+              { "name": "Sources.ContactId", "data_type": "VARCHAR(100)", "required": false, "description": "Array of Source Contact IDs" },
+              { "name": "RateType.RoomTypeID", "data_type": "INT(20)", "required": true, "description": "Unique RoomType ID" },
+              { "name": "RateType.RateTypeID", "data_type": "INT(20)", "required": true, "description": "Unique RateType ID" },
+              { "name": "RateType.FromDate", "data_type": "DATETIME", "required": true, "description": "Rate effective from date (YYYY-MM-DD)" },
+              { "name": "RateType.ToDate", "data_type": "DATETIME", "required": true, "description": "Rate effective to date (YYYY-MM-DD)" },
+              { "name": "RateType.RoomRate.Base", "data_type": "DECIMAL(19,4)", "required": true, "description": "Base rate amount" },
+              { "name": "RateType.RoomRate.ExtraAdult", "data_type": "DECIMAL(19,4)", "required": false, "description": "Extra adult catch-all rate" },
+              { "name": "RateType.RoomRate.ExtraChild", "data_type": "DECIMAL(19,4)", "required": false, "description": "Extra child catch-all rate" },
+              { "name": "RateType.RoomRate.Adult1", "data_type": "DECIMAL(19,4)", "required": false, "description": "Rate for 1 adult occupancy" },
+              { "name": "RateType.RoomRate.Adult2", "data_type": "DECIMAL(19,4)", "required": false, "description": "Rate for 2 adult occupancy" },
+              { "name": "RateType.RoomRate.Adult3", "data_type": "DECIMAL(19,4)", "required": false, "description": "Rate for 3 adult occupancy" },
+              { "name": "RateType.RoomRate.Adult4", "data_type": "DECIMAL(19,4)", "required": false, "description": "Rate for 4 adult occupancy" },
+              { "name": "RateType.RoomRate.Adult5", "data_type": "DECIMAL(19,4)", "required": false, "description": "Rate for 5 adult occupancy" },
+              { "name": "RateType.RoomRate.Adult6", "data_type": "DECIMAL(19,4)", "required": false, "description": "Rate for 6 adult occupancy" },
+              { "name": "RateType.RoomRate.Adult7", "data_type": "DECIMAL(19,4)", "required": false, "description": "Rate for 7 adult occupancy" },
+              { "name": "RateType.RoomRate.Child1", "data_type": "DECIMAL(19,4)", "required": false, "description": "Rate for 1st child" },
+              { "name": "RateType.RoomRate.Child2", "data_type": "DECIMAL(19,4)", "required": false, "description": "Rate for 2nd child" },
+              { "name": "RateType.RoomRate.Child3", "data_type": "DECIMAL(19,4)", "required": false, "description": "Rate for 3rd child" },
+              { "name": "RateType.RoomRate.Child4", "data_type": "DECIMAL(19,4)", "required": false, "description": "Rate for 4th child" },
+              { "name": "RateType.RoomRate.Child5", "data_type": "DECIMAL(19,4)", "required": false, "description": "Rate for 5th child" },
+              { "name": "RateType.RoomRate.Child6", "data_type": "DECIMAL(19,4)", "required": false, "description": "Rate for 6th child" },
+              { "name": "RateType.RoomRate.Child7", "data_type": "DECIMAL(19,4)", "required": false, "description": "Rate for 7th child" }
+            ],
+            "error_codes": [
+              { "code": "113", "description": "Invalid base rate" },
+              { "code": "135", "description": "Invalid rate for any value between Adult1 to Adult7" },
+              { "code": "121", "description": "No Rates to update" }
+            ]
+          },
+          {
+            "id": "retrieve_room_rates_with_source",
+            "name": "Retrieve Room Rates with Source Details",
+            "description": "Provides room types, rate types, rate plans, and separate channel source information for a property.",
+            "endpoint": "https://live.ipms247.com/pmsinterface/pms_connectivity.php",
+            "method": "POST",
+            "response_format": "JSON",
+            "connectivity_type": ["PMS Connectivity"],
+            "headers": { "Content-Type": "application/json" },
+            "request_parameters": [
+              { "name": "Request_Type", "required": true, "description": "Use keyword Separatesourcemapping", "allowed_values": ["Separatesourcemapping"] },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code" },
+              { "name": "AuthCode", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code" }
+            ],
+            "response_parameters": [
+              { "name": "RoomType.ID", "data_type": "Integer", "description": "Room Type ID" },
+              { "name": "RoomType.Name", "data_type": "String", "description": "Room Type Name" },
+              { "name": "RateType.ID", "data_type": "Integer", "description": "Rate Type ID" },
+              { "name": "RateType.Name", "data_type": "String", "description": "Rate Type Name" },
+              { "name": "RatePlan.RatePlanID", "data_type": "Integer", "description": "Rate Plan ID" },
+              { "name": "RatePlan.Name", "data_type": "String", "description": "Rate Plan Name" },
+              { "name": "Saparatechannelsource.Channel_name", "data_type": "String", "description": "Channel Name / Remarks", "example": "OTA Common Pool" },
+              { "name": "Saparatechannelsource.ChannelID", "data_type": "Integer", "description": "Channel Unique ID", "example": "2700000000000096" }
+            ]
+          },
+          {
+            "id": "update_max_nights",
+            "name": "Update Max Nights",
+            "description": "Updates the maximum length-of-stay restriction for specific date ranges. Restricts booking if the reservation includes a date requiring a longer stay than the maximum.",
+            "endpoint": "https://live.ipms247.com/pmsinterface/pms_connectivity.php",
+            "method": "POST",
+            "response_format": "JSON",
+            "connectivity_type": ["PMS Connectivity"],
+            "headers": { "Content-Type": "application/json" },
+            "request_parameters": [
+              { "name": "Request_Type", "required": true, "description": "Use keyword UpdateMaxNights", "allowed_values": ["UpdateMaxNights"] },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code" },
+              { "name": "AuthCode", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code" },
+              { "name": "RatePlanID", "data_type": "INT(20)", "required": true, "description": "Unique Rate Plan ID", "location": "RES_Request.RatePlan[].RatePlanID" },
+              { "name": "FromDate", "data_type": "DATETIME", "required": true, "description": "Restriction start date (YYYY-MM-DD)", "location": "RES_Request.RatePlan[].FromDate" },
+              { "name": "ToDate", "data_type": "DATETIME", "required": true, "description": "Restriction end date (YYYY-MM-DD)", "location": "RES_Request.RatePlan[].ToDate" },
+              { "name": "MaxNight", "data_type": "INT(11)", "required": true, "description": "Maximum number of nights allowed", "example": "3", "location": "RES_Request.RatePlan[].MaxNight" }
+            ],
+            "error_codes": [
+              { "code": "122", "description": "Rate Plan ID is missing" },
+              { "code": "127", "description": "MaxNight value is missing" },
+              { "code": "128", "description": "Invalid MaxNight value" }
+            ]
+          },
+          {
+            "id": "update_min_nights",
+            "name": "Update Min Nights",
+            "description": "Updates the minimum length-of-stay restriction for specific date ranges. Restricts booking if the reservation includes a date requiring a shorter stay than the minimum.",
+            "endpoint": "https://live.ipms247.com/pmsinterface/pms_connectivity.php",
+            "method": "POST",
+            "response_format": "JSON",
+            "connectivity_type": ["PMS Connectivity"],
+            "headers": { "Content-Type": "application/json" },
+            "request_parameters": [
+              { "name": "Request_Type", "required": true, "description": "Use keyword UpdateMinNights", "allowed_values": ["UpdateMinNights"] },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code" },
+              { "name": "AuthCode", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code" },
+              { "name": "RatePlanID", "data_type": "INT(20)", "required": true, "description": "Unique Rate Plan ID" },
+              { "name": "FromDate", "data_type": "DATETIME", "required": true, "description": "Restriction start date (YYYY-MM-DD)" },
+              { "name": "ToDate", "data_type": "DATETIME", "required": true, "description": "Restriction end date (YYYY-MM-DD)" },
+              { "name": "MinNight", "data_type": "INT(11)", "required": true, "description": "Minimum number of nights required", "example": "3" }
+            ],
+            "error_codes": [
+              { "code": "122", "description": "Rate Plan ID is missing" },
+              { "code": "127", "description": "MinNight value is missing" },
+              { "code": "128", "description": "Invalid MinNight value" }
+            ]
+          },
+          {
+            "id": "update_stop_sell",
+            "name": "Update StopSell",
+            "description": "Opens or closes StopSell for specific date ranges. When StopSell is enabled, the room becomes unavailable for booking on the specified dates.",
+            "endpoint": "https://live.ipms247.com/pmsinterface/pms_connectivity.php",
+            "method": "POST",
+            "response_format": "JSON",
+            "connectivity_type": ["PMS Connectivity"],
+            "headers": { "Content-Type": "application/json" },
+            "request_parameters": [
+              { "name": "Request_Type", "required": true, "description": "Use keyword UpdateStopSell", "allowed_values": ["UpdateStopSell"] },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code" },
+              { "name": "AuthCode", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code" },
+              { "name": "RatePlanID", "data_type": "INT(20)", "required": true, "description": "Unique Rate Plan ID" },
+              { "name": "FromDate", "data_type": "DATETIME", "required": true, "description": "Restriction start date (YYYY-MM-DD)" },
+              { "name": "ToDate", "data_type": "DATETIME", "required": true, "description": "Restriction end date (YYYY-MM-DD)" },
+              { "name": "StopSell", "data_type": "INT(1)", "required": true, "description": "StopSell flag. 1 = Enable StopSell (room unavailable), 0 = Disable StopSell (room available)", "allowed_values": ["0", "1"], "example": "0" }
+            ],
+            "error_codes": [
+              { "code": "122", "description": "Rate Plan ID is missing" },
+              { "code": "127", "description": "StopSell value is missing" },
+              { "code": "128", "description": "Invalid StopSell value" }
+            ]
+          },
+          {
+            "id": "update_close_on_arrival",
+            "name": "Update Close On Arrival (COA)",
+            "description": "Applies or removes Close On Arrival restrictions. When COA is enabled, guests cannot check in on the specified dates.",
+            "endpoint": "https://live.ipms247.com/pmsinterface/pms_connectivity.php",
+            "method": "POST",
+            "response_format": "JSON",
+            "connectivity_type": ["PMS Connectivity"],
+            "headers": { "Content-Type": "application/json" },
+            "request_parameters": [
+              { "name": "Request_Type", "required": true, "description": "Use keyword UpdateCOA", "allowed_values": ["UpdateCOA"] },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code" },
+              { "name": "AuthCode", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code" },
+              { "name": "RatePlanID", "data_type": "INT(20)", "required": true, "description": "Unique Rate Plan ID" },
+              { "name": "FromDate", "data_type": "DATETIME", "required": true, "description": "Restriction start date (YYYY-MM-DD)" },
+              { "name": "ToDate", "data_type": "DATETIME", "required": true, "description": "Restriction end date (YYYY-MM-DD)" },
+              { "name": "COA", "data_type": "INT(1)", "required": true, "description": "COA flag. 1 = Enable COA (no check-in), 0 = Disable COA (check-in allowed)", "allowed_values": ["0", "1"], "example": "0" }
+            ],
+            "error_codes": [
+              { "code": "122", "description": "Rate Plan ID is missing" },
+              { "code": "127", "description": "COA value is missing" },
+              { "code": "128", "description": "Invalid COA value" }
+            ]
+          },
+          {
+            "id": "update_close_on_departure",
+            "name": "Update Close On Departure (COD)",
+            "description": "Applies or removes Close On Departure restrictions. When COD is enabled, guests cannot check out on the specified dates.",
+            "endpoint": "https://live.ipms247.com/pmsinterface/pms_connectivity.php",
+            "method": "POST",
+            "response_format": "JSON",
+            "connectivity_type": ["PMS Connectivity"],
+            "headers": { "Content-Type": "application/json" },
+            "request_parameters": [
+              { "name": "Request_Type", "required": true, "description": "Use keyword UpdateCOD", "allowed_values": ["UpdateCOD"] },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code" },
+              { "name": "AuthCode", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code" },
+              { "name": "RatePlanID", "data_type": "INT(20)", "required": true, "description": "Unique Rate Plan ID" },
+              { "name": "FromDate", "data_type": "DATETIME", "required": true, "description": "Restriction start date (YYYY-MM-DD)" },
+              { "name": "ToDate", "data_type": "DATETIME", "required": true, "description": "Restriction end date (YYYY-MM-DD)" },
+              { "name": "COD", "data_type": "INT(1)", "required": true, "description": "COD flag. 1 = Enable COD (no check-out), 0 = Disable COD (check-out allowed)", "allowed_values": ["0", "1"], "example": "0" }
+            ],
+            "error_codes": [
+              { "code": "122", "description": "Rate Plan ID is missing" },
+              { "code": "127", "description": "COD value is missing" },
+              { "code": "128", "description": "Invalid COD value" }
+            ]
+          },
+          {
+            "id": "retrieve_room_inventory",
+            "name": "Retrieve Room Inventory",
+            "description": "Returns room inventory data for a specific date range and room type.",
+            "endpoint": "https://live.ipms247.com/pmsinterface/getdataAPI.php",
+            "method": "POST",
+            "response_format": "XML",
+            "connectivity_type": ["PMS Connectivity", "RMS"],
+            "headers": { "Content-Type": "application/xml" },
+            "request_parameters": [
+              { "name": "Request_Type", "data_type": "VARCHAR(250)", "required": true, "description": "Use keyword Inventory", "allowed_values": ["Inventory"] },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code" },
+              { "name": "AuthCode", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code" },
+              { "name": "FromDate", "data_type": "DATE", "required": true, "description": "From date (YYYY-MM-DD)", "example": "2020-07-05" },
+              { "name": "ToDate", "data_type": "DATE", "required": true, "description": "To date (YYYY-MM-DD)", "example": "2020-07-07" }
+            ],
+            "response_parameters": [
+              { "name": "RoomInfo.Source.RoomTypes.RoomType.RoomTypeID", "data_type": "INT(11)", "description": "Room Type ID" },
+              { "name": "RoomInfo.Source.RoomTypes.RoomType.FromDate", "data_type": "DATETIME", "description": "Start date of inventory block" },
+              { "name": "RoomInfo.Source.RoomTypes.RoomType.ToDate", "data_type": "DATETIME", "description": "End date of inventory block" },
+              { "name": "RoomInfo.Source.RoomTypes.RoomType.Availability", "data_type": "INT(11)", "description": "Number of available rooms", "example": "4" }
+            ]
+          },
+          {
+            "id": "retrieve_room_rates",
+            "name": "Retrieve Room Rates",
+            "description": "Returns room rate data for a specific date range, room type, and rate type.",
+            "endpoint": "https://live.ipms247.com/pmsinterface/getdataAPI.php",
+            "method": "POST",
+            "response_format": "XML",
+            "connectivity_type": ["PMS Connectivity", "RMS"],
+            "headers": { "Content-Type": "application/xml" },
+            "request_parameters": [
+              { "name": "Request_Type", "data_type": "VARCHAR(250)", "required": true, "description": "Use keyword Rate", "allowed_values": ["Rate"] },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code" },
+              { "name": "AuthCode", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code" },
+              { "name": "FromDate", "data_type": "DATE", "required": true, "description": "From date (YYYY-MM-DD)" },
+              { "name": "ToDate", "data_type": "DATE", "required": true, "description": "To date (YYYY-MM-DD)" }
+            ],
+            "response_parameters": [
+              { "name": "RoomInfo.Source.RoomTypes.RateType.RoomTypeID", "data_type": "INT(11)", "description": "Room Type ID" },
+              { "name": "RoomInfo.Source.RoomTypes.RateType.RateTypeID", "data_type": "INT(11)", "description": "Rate Type ID" },
+              { "name": "RoomInfo.Source.RoomTypes.RateType.FromDate", "data_type": "DATETIME", "description": "Rate effective from date" },
+              { "name": "RoomInfo.Source.RoomTypes.RateType.ToDate", "data_type": "DATETIME", "description": "Rate effective to date" },
+              { "name": "RoomInfo.Source.RoomTypes.RateType.RoomRate.Base", "data_type": "Decimal(11,4)", "description": "Base Rate", "example": "2500.0000" },
+              { "name": "RoomInfo.Source.RoomTypes.RateType.RoomRate.ExtraAdult", "data_type": "Decimal(11,4)", "description": "Extra Adult Rate", "example": "500.0000" },
+              { "name": "RoomInfo.Source.RoomTypes.RateType.RoomRate.ExtraChild", "data_type": "Decimal(11,4)", "description": "Extra Child Rate", "example": "200.0000" }
+            ]
+          }
+        ]
+      },
+      "bookings": {
+        "description": "Use the Bookings APIs to retrieve reservations, modifications, and cancellations. Also allows checking availability and creating new bookings.",
+        "apis": [
+          {
+            "id": "check_availability",
+            "name": "Check Availability",
+            "description": "Checks room availability including rate plans, pricing, taxes, promotions, and packages for a property.",
+            "endpoint": "https://live.ipms247.com/booking/reservation_api/listing.php",
+            "method": "GET",
+            "response_format": "JSON",
+            "connectivity_type": ["Meta Search", "Open", "eZee Reservation Required"],
+            "headers": {},
+            "url_template": "https://live.ipms247.com/booking/reservation_api/listing.php?request_type=RoomList&HotelCode={HotelCode}&APIKey={APIKey}&check_in_date={check_in_date}&check_out_date={check_out_date}&num_nights={num_nights}&number_adults={number_adults}&number_children={number_children}&num_rooms={num_rooms}&promotion_code={promotion_code}&property_configuration_info={property_configuration_info}&showtax={showtax}&show_only_available_rooms={show_only_available_rooms}&show_matched_minimum_nights_rateplans={show_matched_minimum_nights_rateplans}&language={language}&roomtypeunkid={roomtypeunkid}&packagefor={packagefor}&promotionfor={promotionfor}",
+            "request_parameters": [
+              { "name": "request_type", "data_type": "String", "required": true, "description": "Use keyword RoomList", "allowed_values": ["RoomList"] },
+              { "name": "HotelCode", "data_type": "INT(11)", "required": true, "description": "Unique Hotel code" },
+              { "name": "APIKey", "data_type": "VARCHAR(300)", "required": true, "description": "Unique Authentication code" },
+              { "name": "check_in_date", "data_type": "DATE", "required": true, "description": "Check-in date (YYYY-MM-DD)", "example": "2020-05-20" },
+              { "name": "check_out_date", "data_type": "DATE", "required": false, "description": "Check-out date (YYYY-MM-DD). Defaults to num_nights after check-in if not provided.", "example": "2020-05-30" },
+              { "name": "num_nights", "data_type": "INT(11)", "required": false, "description": "Number of nights. Defaults to 10 days after check-in. Maximum range is 30 days from check-in.", "example": "2" },
+              { "name": "number_adults", "data_type": "INT(11)", "required": false, "description": "Number of adults. Default is 1.", "example": "2" },
+              { "name": "number_children", "data_type": "INT(11)", "required": false, "description": "Number of children. Default is 0.", "example": "1" },
+              { "name": "num_rooms", "data_type": "INT(11)", "required": false, "description": "Total number of rooms required. Default is 1.", "example": "1" },
+              { "name": "promotion_code", "data_type": "INT(11)", "required": false, "description": "Unique Promotion Code. Default is empty.", "example": "112500000000000001" },
+              { "name": "property_configuration_info", "data_type": "INT(11)", "required": false, "description": "Based on property booking engine settings. Default is 0. When 0, use showtax, show_only_available_rooms, and show_matched_minimum_nights_rateplans to control response.", "allowed_values": ["0", "1"], "default": "0" },
+              { "name": "showtax", "data_type": "INT(11)", "required": false, "description": "Controls tax-inclusive vs tax-exclusive rates. Only applies when property_configuration_info=0.", "allowed_values": ["0", "1"] },
+              { "name": "show_only_available_rooms", "data_type": "INT(11)", "required": false, "description": "1 = return only available rate plans. Only applies when property_configuration_info=0. Default 0.", "allowed_values": ["0", "1"], "default": "0" },
+              { "name": "show_matched_minimum_nights_rateplans", "data_type": "INT(11)", "required": false, "description": "Controls minimum nights filtering. 0=no filter, 1=match min nights criteria, 2=match exactly. Only applies when property_configuration_info=0.", "allowed_values": ["0", "1", "2"] },
+              { "name": "language", "data_type": "VARCHAR(20)", "required": false, "description": "Language code. See portal for full list.", "example": "en" },
+              { "name": "roomtypeunkid", "data_type": "INT(20)", "required": false, "description": "Unique RoomType ID to filter results to a specific room type", "example": "12500000000000001" },
+              { "name": "packagefor", "data_type": "VARCHAR(20)", "required": false, "description": "Controls package data platform. Default returns desktop packages only.", "allowed_values": ["DESKTOP", "MOBILE"] },
+              { "name": "promotionfor", "data_type": "VARCHAR(20)", "required": false, "description": "Controls promotion data platform. Default returns desktop promotions only.", "allowed_values": ["DESKTOP", "MOBILE"] }
+            ],
+            "response_parameters": [
+              { "name": "Room_Name", "data_type": "VARCHAR(255)", "description": "Room name" },
+              { "name": "Room_Description", "data_type": "VARCHAR(255)", "description": "Room description" },
+              { "name": "Roomtype_Name", "data_type": "VARCHAR(255)", "description": "Room Type name" },
+              { "name": "Package_Description", "data_type": "VARCHAR(255)", "description": "Package description including inclusions" },
+              { "name": "Roomtype_Short_code", "data_type": "VARCHAR(255)", "description": "Room Type short code" },
+              { "name": "Specials_Desc", "data_type": "VARCHAR(255)", "description": "Specials details" },
+              { "name": "specialconditions", "data_type": "VARCHAR(255)", "description": "Special conditions" },
+              { "name": "specialhighlightinclusion", "data_type": "VARCHAR(255)", "description": "Special highlight inclusion details" },
+              { "name": "hotelcode", "data_type": "INT(11)", "description": "Hotel code" },
+              { "name": "roomtypeunkid", "data_type": "INT(11)", "description": "Room Type Unique ID" },
+              { "name": "ratetypeunkid", "data_type": "INT(11)", "description": "Rate Type Unique ID" },
+              { "name": "roomrateunkid", "data_type": "INT(11)", "description": "Rate Plan Unique ID" },
+              { "name": "base_adult_occupancy", "data_type": "INT(11)", "description": "Base adult occupancy count" }
+            ]
+          }
+        ]
+      }
+    },
+    "global_error_codes": {
+      "description": "Common error codes returned across multiple endpoints",
+      "codes": [
+        { "code": "100", "description": "Missing required parameters." },
+        { "code": "101", "description": "Hotel Code is missing" },
+        { "code": "102", "description": "Authentication Code is missing" },
+        { "code": "103", "description": "Room type is missing" },
+        { "code": "104", "description": "Rate type is missing" },
+        { "code": "105", "description": "From Date is missing" },
+        { "code": "106", "description": "From Date is not a valid date" },
+        { "code": "107", "description": "To Date is missing" },
+        { "code": "108", "description": "To Date is not a valid date" },
+        { "code": "109", "description": "To Date must be greater than From Date" },
+        { "code": "201", "description": "Unauthorized request. Request Type is not valid for this hotel code" },
+        { "code": "202", "description": "Unauthorized request. Hotel code is not active" },
+        { "code": "301", "description": "Unauthorized Request. Please check hotel code and authentication code" },
+        { "code": "302", "description": "Unauthorized Request. Integration is not allowed" },
+        { "code": "303", "description": "Auth Code is inactive" },
+        { "code": "400", "description": "Invalid Request Format" },
+        { "code": "500", "description": "Internal error occurred during processing" },
+        { "code": "502", "description": "Request Type is missing" },
+        { "code": "602", "description": "Invalid Auth Code" },
+        { "code": "611", "description": "Unauthorized Access: Invalid Auth Code or Hotel Code" },
+        { "code": "612", "description": "Sandbox User Auth Code is inactive" },
+        { "code": "614", "description": "Sandbox User Trial Period has expired" }
+      ]
+    },
+    "data_types_reference": {
+      "INT": "Integer numeric value",
+      "INT(11)": "Standard integer, up to 11 digits",
+      "INT(20)": "Large integer, up to 20 digits — used for unique IDs",
+      "VARCHAR(n)": "Variable-length string of up to n characters",
+      "DECIMAL(19,4)": "Decimal number with up to 19 digits and 4 decimal places — used for monetary values",
+      "DATE": "Date in YYYY-MM-DD format",
+      "DATETIME": "Date (and optionally time) in YYYY-MM-DD or YYYY-MM-DD HH:MM:SS format",
+      "TINYINT(1)": "Boolean-like integer — typically 0 or 1"
+    },
+    "id_format_note": "All Unique IDs in this API are 19-digit integers in the format XXXXXXXXXXXXXXXXX (e.g., 1234500000000000001). These IDs encode the hotel code prefix followed by a sequential number."
+  }
+}
